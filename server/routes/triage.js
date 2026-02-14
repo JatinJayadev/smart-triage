@@ -4,110 +4,195 @@ const Patient = require("../models/Patient");
 const OpenAI = require("openai");
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 router.post("/", async (req, res) => {
   try {
-
     const {
+      name,
       age,
       gender,
-      symptoms,
-      bloodPressure,
+      systolicBP,
+      diastolicBP,
       heartRate,
       temperature,
-      preExistingConditions
+      spo2,
+      respRate,
+      symptoms = [],
+      preExistingConditions = [],
+      ehrText = "",
     } = req.body;
 
-    // ----------------------------
-    // OpenAI Prompt
-    // ----------------------------
+    // -----------------------------
+    // Flexible Validation
+    // -----------------------------
+    const hasManualData =
+      age ||
+      systolicBP ||
+      heartRate ||
+      symptoms.length > 0;
 
+    const hasEHR = ehrText && ehrText.trim().length > 20;
+
+    if (!hasManualData && !hasEHR) {
+      return res.status(400).json({
+        message: "No sufficient clinical data provided.",
+      });
+    }
+
+    // Ensure numbers
+    const vitals = {
+      systolicBP: Number(systolicBP) || null,
+      diastolicBP: Number(diastolicBP) || null,
+      heartRate: Number(heartRate) || null,
+      temperature: Number(temperature) || null,
+      spo2: Number(spo2) || null,
+      respRate: Number(respRate) || null,
+    };
+
+    // -----------------------------
+    // Enhanced Prompt (Structured + EHR)
+    // -----------------------------
     const prompt = `
-You are an AI-powered hospital triage assistant.
+You are an AI-powered hospital triage assistant trained in emergency medicine protocols.
 
-Analyze the patient details below and classify:
+Perform structured clinical reasoning.
 
-1. Risk Level: Low / Medium / High
-2. Recommended Department (General Medicine, Cardiology, Neurology, Emergency, etc.)
-3. Confidence Score (0 to 1)
-4. Explanation (Top 3 medical reasons)
+STRUCTURED PATIENT DATA:
+Age: ${age || "Not provided"}
+Gender: ${gender || "Not provided"}
 
-Patient Details:
-Age: ${age}
-Gender: ${gender}
-Symptoms: ${symptoms.join(", ")}
-Blood Pressure: ${bloodPressure}
-Heart Rate: ${heartRate}
-Temperature: ${temperature}
-Pre-existing Conditions: ${preExistingConditions.join(", ")}
+Vital Signs:
+Systolic BP: ${vitals.systolicBP}
+Diastolic BP: ${vitals.diastolicBP}
+Heart Rate: ${vitals.heartRate}
+Temperature: ${vitals.temperature}
+SpO2: ${vitals.spo2}
+Respiratory Rate: ${vitals.respRate}
 
-Respond ONLY in JSON format like:
+Symptoms:
+${symptoms.join(", ") || "None"}
 
-{
-  "riskLevel": "",
-  "department": "",
-  "confidence": 0,
-  "explanation": []
-}
+Pre-existing Conditions:
+${preExistingConditions.join(", ") || "None"}
+
+UNSTRUCTURED EHR CONTENT:
+${hasEHR ? ehrText : "No EHR document provided."}
+
+If EHR contains vitals or symptoms not listed above, incorporate them.
+If conflict exists, prioritize most recent or abnormal values.
+
+CLINICAL RULES:
+- SpO2 < 90 → High Risk
+- SBP < 90 → High Risk
+- HR > 130 or < 40 → High Risk
+- Temperature > 39°C → Medium/High Risk
+- Chest Pain + Heart Disease → High Risk
+- Confusion + abnormal vitals → High Risk
+
+TASKS:
+1. Determine Risk Level (Low / Medium / High)
+2. Assign Triage Priority (Immediate / Urgent / Routine)
+3. Provide Severity Score (0-100)
+4. Determine Vital Stability (Stable / Unstable)
+5. Recommend Primary Department
+6. Recommend Secondary Department (if needed)
+7. List Top 5 Contributing Clinical Factors
+8. Provide 3–5 Recommended Next Clinical Actions
+9. Provide Confidence Score (0–1)
+
+Respond ONLY in valid JSON.
 `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
+      temperature: 0.2,
       messages: [
         {
           role: "system",
-          content: "You are a professional emergency triage medical assistant."
+          content:
+            "You are a professional emergency triage nurse providing structured medical reasoning.",
         },
-        {
-          role: "user",
-          content: prompt
-        }
+        { role: "user", content: prompt },
       ],
-      temperature: 0.2
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "triage_response",
+          schema: {
+            type: "object",
+            properties: {
+              riskLevel: { type: "string", enum: ["Low", "Medium", "High"] },
+              triagePriority: {
+                type: "string",
+                enum: ["Immediate", "Urgent", "Routine"],
+              },
+              severityScore: { type: "number" },
+              vitalStatus: {
+                type: "string",
+                enum: ["Stable", "Unstable"],
+              },
+              departmentPrimary: { type: "string" },
+              departmentSecondary: { type: "string" },
+              contributingFactors: {
+                type: "array",
+                items: { type: "string" },
+              },
+              recommendations: {
+                type: "array",
+                items: { type: "string" },
+              },
+              confidence: { type: "number" },
+            },
+            required: [
+              "riskLevel",
+              "triagePriority",
+              "severityScore",
+              "vitalStatus",
+              "departmentPrimary",
+              "contributingFactors",
+              "recommendations",
+              "confidence",
+            ],
+          },
+        },
+      },
     });
 
-    const aiResponse = completion.choices[0].message.content;
+    const parsed = JSON.parse(completion.choices[0].message.content);
 
-    let parsed;
+    // Clamp values safely
+    parsed.severityScore = Math.min(Math.max(parsed.severityScore || 0, 0), 100);
+    parsed.confidence = Math.min(Math.max(parsed.confidence || 0, 0), 1);
 
-    try {
-      parsed = JSON.parse(aiResponse);
-    } catch (err) {
-      return res.status(500).json({
-        message: "AI response parsing failed"
-      });
-    }
-
-    // ----------------------------
+    // -----------------------------
     // Save to MongoDB
-    // ----------------------------
-
+    // -----------------------------
     const newPatient = new Patient({
+      name,
       age,
       gender,
+      ...vitals,
       symptoms,
-      bloodPressure,
-      heartRate,
-      temperature,
       preExistingConditions,
+      ehrText: hasEHR ? ehrText : null,
       riskLevel: parsed.riskLevel,
-      department: parsed.department,
+      triagePriority: parsed.triagePriority,
+      severityScore: parsed.severityScore,
+      vitalStatus: parsed.vitalStatus,
+      departmentPrimary: parsed.departmentPrimary,
+      departmentSecondary: parsed.departmentSecondary,
+      contributingFactors: parsed.contributingFactors,
+      recommendations: parsed.recommendations,
       confidence: parsed.confidence,
-      explanation: parsed.explanation
     });
 
     await newPatient.save();
 
-    // ----------------------------
-    // Send to Frontend
-    // ----------------------------
-
     res.json(parsed);
-
   } catch (error) {
-    console.log(error);
+    console.error("Server Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
