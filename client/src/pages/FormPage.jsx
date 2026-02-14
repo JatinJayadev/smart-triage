@@ -10,9 +10,6 @@ GlobalWorkerOptions.workerSrc = workerSrc;
 function FormPage() {
   const navigate = useNavigate();
 
-  // -----------------------------
-  // STATES
-  // -----------------------------
   const [ehrText, setEhrText] = useState("");
   const [uploading, setUploading] = useState(false);
 
@@ -30,9 +27,6 @@ function FormPage() {
     preExistingConditions: [],
   });
 
-  // -----------------------------
-  // OPTIONS
-  // -----------------------------
   const symptomOptions = [
     "Chest Pain",
     "Shortness of Breath",
@@ -80,9 +74,6 @@ function FormPage() {
     "HIV/AIDS",
   ];
 
-  // -----------------------------
-  // HANDLERS
-  // -----------------------------
   const toggleSelection = (type, value) => {
     setFormData((prev) => {
       const list = prev[type];
@@ -97,9 +88,6 @@ function FormPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // -----------------------------
-  // EHR FILE PARSER
-  // -----------------------------
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -167,9 +155,6 @@ function FormPage() {
     }
   };
 
-  // -----------------------------
-  // SUBMIT
-  // -----------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -199,9 +184,6 @@ function FormPage() {
     }
   };
 
-  // -----------------------------
-  // UI
-  // -----------------------------
   return (
     <div className='clinical-page'>
       <div className='clinical-form-card'>

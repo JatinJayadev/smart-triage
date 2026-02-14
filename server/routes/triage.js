@@ -24,9 +24,6 @@ router.post("/", async (req, res) => {
       ehrText = "",
     } = req.body;
 
-    // -----------------------------
-    // Flexible Validation
-    // -----------------------------
     const hasManualData =
       age ||
       systolicBP ||
@@ -51,9 +48,6 @@ router.post("/", async (req, res) => {
       respRate: Number(respRate) || null,
     };
 
-    // -----------------------------
-    // Enhanced Prompt (Structured + EHR)
-    // -----------------------------
     const prompt = `
 You are an AI-powered hospital triage assistant trained in emergency medicine protocols.
 
@@ -162,13 +156,9 @@ Respond ONLY in valid JSON.
 
     const parsed = JSON.parse(completion.choices[0].message.content);
 
-    // Clamp values safely
     parsed.severityScore = Math.min(Math.max(parsed.severityScore || 0, 0), 100);
     parsed.confidence = Math.min(Math.max(parsed.confidence || 0, 0), 1);
 
-    // -----------------------------
-    // Save to MongoDB
-    // -----------------------------
     const newPatient = new Patient({
       name,
       age,

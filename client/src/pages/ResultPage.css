@@ -1,6 +1,4 @@
-/* Layout */
 .clinical-container {
-  /* min-height: 100vh; */
   background: #f5f7fa;
   display: flex;
   justify-content: center;
@@ -21,7 +19,6 @@
   text-align: center;
 }
 
-/* Header */
 .clinical-header {
   display: flex;
   justify-content: space-between;
@@ -36,7 +33,6 @@
   margin-top: 6px;
 }
 
-/* Risk Indicator */
 .risk-indicator {
   padding: 10px 20px;
   border-radius: 4px;
@@ -68,7 +64,6 @@
   border: 1px solid #91d5ff;
 }
 
-/* Metrics */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -102,7 +97,6 @@
   margin-left: 4px;
 }
 
-/* Vital */
 .vital-status {
   font-weight: 600;
   font-size: 16px;
@@ -116,7 +110,6 @@
   color: #b91c1c;
 }
 
-/* Sections */
 .section {
   margin-bottom: 30px;
 }
@@ -128,7 +121,6 @@
   color: #1f2937;
 }
 
-/* Departments */
 .department-list {
   border: 1px solid #e3e8ee;
   border-radius: 6px;
@@ -140,7 +132,6 @@
   padding: 6px 0;
 }
 
-/* Lists */
 .clinical-list {
   padding-left: 18px;
 }
@@ -151,7 +142,6 @@
   color: #374151;
 }
 
-/* Disclaimer */
 .clinical-disclaimer {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -162,7 +152,6 @@
   margin-bottom: 20px;
 }
 
-/* Button */
 .primary-btn {
   width: 100%;
   padding: 14px;
@@ -179,7 +168,6 @@
   background: #111827;
 }
 
-/* Responsive */
 @media (max-width: 900px) {
   .metrics-grid {
     grid-template-columns: 1fr;
