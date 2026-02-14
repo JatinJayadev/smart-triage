@@ -78,7 +78,6 @@ function FormPage() {
     "Thyroid Disorder",
     "Anemia",
     "HIV/AIDS",
-    "None",
   ];
 
   // -----------------------------
