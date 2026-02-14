@@ -187,7 +187,7 @@ function FormPage() {
     }
 
     try {
-      const response = await axios.post("https://smart-triage.onrender.com/", {
+      const response = await axios.post("https://smart-triage.onrender.com/api/triage", {
         ...formData,
         ehrText,
       });
