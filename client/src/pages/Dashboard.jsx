@@ -30,7 +30,9 @@ function Dashboard() {
 
   const fetchDashboard = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/triage");
+      const res = await axios.get(
+        "https://smart-triage.onrender.com/api/triage",
+      );
       setData(res.data);
     } catch (error) {
       console.error("Dashboard fetch error:", error);
