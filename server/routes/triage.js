@@ -7,6 +7,21 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const DEPARTMENTS = [
+  "Emergency Medicine",
+  "Cardiology",
+  "Neurology",
+  "Pulmonology",
+  "General Medicine",
+  "Orthopedics",
+  "Gastroenterology",
+  "Nephrology",
+  "Endocrinology",
+  "Infectious Disease",
+  "ICU",
+];
+
+
 router.post("/", async (req, res) => {
   try {
     const {
@@ -86,8 +101,14 @@ TASKS:
 2. Assign Triage Priority (Immediate / Urgent / Routine)
 3. Provide Severity Score (0-100)
 4. Determine Vital Stability (Stable / Unstable)
-5. Recommend Primary Department
-6. Recommend Secondary Department (if needed)
+5. Recommend Primary Department from this list ONLY:
+["Emergency Medicine","Cardiology","Neurology","Pulmonology",
+"General Medicine","Orthopedics","Gastroenterology",
+"Nephrology","Endocrinology","Infectious Disease","ICU"]
+
+6. Recommend Secondary Department from same list if needed (or null)
+
+⚠️ DO NOT create new department names.
 7. List Top 5 Contributing Clinical Factors
 8. Provide 3–5 Recommended Next Clinical Actions
 9. Provide Confidence Score (0–1)
@@ -196,7 +217,9 @@ router.get("/", async (req, res) => {
     const mediumRisk = patients.filter(p => p.riskLevel === "Medium").length;
     const lowRisk = patients.filter(p => p.riskLevel === "Low").length;
 
-    const unstableCount = patients.filter(p => p.vitalStatus === "Unstable").length;
+    const unstableCount = patients.filter(
+      p => p.vitalStatus === "Unstable"
+    ).length;
 
     const avgSeverity =
       totalPatients > 0
@@ -214,14 +237,53 @@ router.get("/", async (req, res) => {
           ).toFixed(2)
         : 0;
 
-    // Department distribution
+    /* ---------------- Department Stats ---------------- */
+
     const departmentStats = {};
+    const departmentSecondaryStats = {};
+
     patients.forEach((p) => {
-      if (!departmentStats[p.departmentPrimary]) {
-        departmentStats[p.departmentPrimary] = 0;
+      if (p.departmentPrimary) {
+        departmentStats[p.departmentPrimary] =
+          (departmentStats[p.departmentPrimary] || 0) + 1;
       }
-      departmentStats[p.departmentPrimary]++;
+
+      if (p.departmentSecondary) {
+        departmentSecondaryStats[p.departmentSecondary] =
+          (departmentSecondaryStats[p.departmentSecondary] || 0) + 1;
+      }
     });
+
+    /* ---------------- 7-Day Trend (Grouped) ---------------- */
+
+    const last7Days = {};
+    const today = new Date();
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const key = d.toLocaleDateString();
+      last7Days[key] = [];
+    }
+
+    patients.forEach((p) => {
+      const dateKey = new Date(p.createdAt).toLocaleDateString();
+      if (last7Days[dateKey]) {
+        last7Days[dateKey].push(p.severityScore || 0);
+      }
+    });
+
+    const severityTrend = Object.entries(last7Days)
+      .reverse()
+      .map(([date, scores]) => ({
+        date,
+        avgSeverity:
+          scores.length > 0
+            ? (
+                scores.reduce((a, b) => a + b, 0) / scores.length
+              ).toFixed(1)
+            : 0,
+      }));
 
     res.json({
       totalPatients,
@@ -232,6 +294,8 @@ router.get("/", async (req, res) => {
       avgSeverity,
       avgConfidence,
       departmentStats,
+      departmentSecondaryStats,
+      severityTrend,
       patients,
     });
 
@@ -240,6 +304,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 });
+
 
 
 module.exports = router;

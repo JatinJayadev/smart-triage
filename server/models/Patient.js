@@ -31,13 +31,44 @@ const patientSchema = new mongoose.Schema(
       type: String,
       enum: ["Stable", "Unstable"],
     },
-    departmentPrimary: String,
-    departmentSecondary: String,
+    departmentPrimary: {
+      type: "string",
+      enum: [
+        "Emergency Medicine",
+        "Cardiology",
+        "Neurology",
+        "Pulmonology",
+        "General Medicine",
+        "Orthopedics",
+        "Gastroenterology",
+        "Nephrology",
+        "Endocrinology",
+        "Infectious Disease",
+        "ICU",
+      ],
+    },
+    departmentSecondary: {
+      type: ["string", "null"],
+      enum: [
+        "Emergency Medicine",
+        "Cardiology",
+        "Neurology",
+        "Pulmonology",
+        "General Medicine",
+        "Orthopedics",
+        "Gastroenterology",
+        "Nephrology",
+        "Endocrinology",
+        "Infectious Disease",
+        "ICU",
+        null,
+      ],
+    },
     contributingFactors: { type: [String], default: [] },
     recommendations: { type: [String], default: [] },
     confidence: { type: Number, min: 0, max: 1 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 patientSchema.index({ riskLevel: 1 });
