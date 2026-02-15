@@ -6,6 +6,42 @@ import Dashboard from "./Dashboard";
 
 GlobalWorkerOptions.workerSrc = workerSrc;
 
+const Input = ({ label, name, type = "text", required, value, onChange }) => (
+  <div>
+    <label className='block text-sm font-medium text-slate-600 mb-1'>
+      {label}
+    </label>
+    <input
+      type={type}
+      name={name}
+      required={required}
+      value={value}
+      onChange={onChange}
+      className='w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+    />
+  </div>
+);
+
+const Select = ({ label, name, required, value, onChange }) => (
+  <div>
+    <label className='block text-sm font-medium text-slate-600 mb-1'>
+      {label}
+    </label>
+    <select
+      name={name}
+      required={required}
+      value={value}
+      onChange={onChange}
+      className='w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+    >
+      <option value=''>Select</option>
+      <option value='Male'>Male</option>
+      <option value='Female'>Female</option>
+      <option value='Other'>Other</option>
+    </select>
+  </div>
+);
+
 function FormPage() {
   const [activeTab, setActiveTab] = useState("triage");
   const [resultData, setResultData] = useState(null);
@@ -95,9 +131,34 @@ function FormPage() {
     });
   };
 
+  const SelectionSection = ({ title, options, type }) => (
+    <div className='bg-white border rounded-xl p-6 shadow-sm'>
+      <h2 className='text-lg font-semibold mb-6 text-slate-800'>{title}</h2>
+
+      <div className='flex flex-wrap gap-3'>
+        {options.map((option) => (
+          <button
+            type='button'
+            key={option}
+            onClick={() => toggleSelection(type, option)}
+            className={`px-4 py-2 text-sm rounded-full border transition ${
+              formData[type].includes(option)
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-slate-100 hover:bg-slate-200"
+            }`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
   const handleChange = (e) => {
     console.log(e.target.name, e.target.value);
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   const handleFileUpload = async (e) => {
@@ -202,65 +263,6 @@ function FormPage() {
       setAnalyzing(false);
     }
   };
-
-  const Input = ({ label, name, type = "text", required }) => (
-    <div>
-      <label className='block text-sm font-medium text-slate-600 mb-1'>
-        {label}
-      </label>
-      <input
-        type={type}
-        name={name}
-        required={required}
-        value={formData[name] || ""}
-        onChange={handleChange}
-        className='w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-      />
-    </div>
-  );
-
-  const Select = ({ label, name, required }) => (
-    <div>
-      <label className='block text-sm font-medium text-slate-600 mb-1'>
-        {label}
-      </label>
-      <select
-        name={name}
-        required={required}
-        value={formData[name] || ""}
-        onChange={handleChange}
-        className='w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-      >
-        <option value=''>Select</option>
-        <option value='Male'>Male</option>
-        <option value='Female'>Female</option>
-        <option value='Other'>Other</option>
-      </select>
-    </div>
-  );
-
-  const SelectionSection = ({ title, options, type }) => (
-    <div className='bg-white border rounded-xl p-6 shadow-sm'>
-      <h2 className='text-lg font-semibold mb-6 text-slate-800'>{title}</h2>
-
-      <div className='flex flex-wrap gap-3'>
-        {options.map((option) => (
-          <button
-            type='button'
-            key={option}
-            onClick={() => toggleSelection(type, option)}
-            className={`px-4 py-2 text-sm rounded-full border transition ${
-              formData[type].includes(option)
-                ? "bg-slate-900 text-white border-slate-900"
-                : "bg-slate-100 hover:bg-slate-200"
-            }`}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
 
   const {
     riskLevel,
@@ -406,14 +408,28 @@ function FormPage() {
                           </h2>
 
                           <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-                            <Input label='Full Name' name='name' required />
+                            <Input
+                              label='Full Name'
+                              name='name'
+                              required
+                              value={formData.name}
+                              onChange={handleChange}
+                            />
                             <Input
                               label='Age'
                               name='age'
                               type='number'
                               required
+                              value={formData.age}
+                              onChange={handleChange}
                             />
-                            <Select label='Gender' name='gender' required />
+                            <Select
+                              label='Gender'
+                              name='gender'
+                              required
+                              value={formData.gender}
+                              onChange={handleChange}
+                            />
                           </div>
                         </div>
 
@@ -428,27 +444,48 @@ function FormPage() {
                               label='Systolic BP'
                               name='systolicBP'
                               type='number'
+                              value={formData.systolicBP}
+                              onChange={handleChange}
                             />
+
                             <Input
                               label='Diastolic BP'
                               name='diastolicBP'
                               type='number'
+                              value={formData.diastolicBP}
+                              onChange={handleChange}
                             />
+
                             <Input
                               label='Heart Rate'
                               name='heartRate'
                               type='number'
+                              value={formData.heartRate}
+                              onChange={handleChange}
                             />
+
                             <Input
                               label='Temperature (°C)'
                               name='temperature'
                               type='number'
+                              value={formData.temperature}
+                              onChange={handleChange}
                             />
-                            <Input label='SpO₂ (%)' name='spo2' type='number' />
+
+                            <Input
+                              label='SpO₂ (%)'
+                              name='spo2'
+                              type='number'
+                              value={formData.spo2}
+                              onChange={handleChange}
+                            />
+
                             <Input
                               label='Resp Rate'
                               name='respRate'
                               type='number'
+                              value={formData.respRate}
+                              onChange={handleChange}
                             />
                           </div>
                         </div>
