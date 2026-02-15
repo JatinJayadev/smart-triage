@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import "./ResultPage.css";
 
 function ResultPage() {
   const location = useLocation();
@@ -8,7 +7,6 @@ function ResultPage() {
 
   const data = location.state;
 
-  // Redirect if no data (refresh-safe behavior)
   useEffect(() => {
     if (!data) {
       navigate("/");
@@ -31,143 +29,194 @@ function ResultPage() {
 
   const confidencePercent = Math.round(confidence * 100);
 
-  const getRiskClass = (level) => {
-    switch (level) {
-      case "High":
-        return "risk-high";
-      case "Medium":
-        return "risk-medium";
-      case "Low":
-        return "risk-low";
-      default:
-        return "risk-default";
-    }
-  };
+  // const getRiskClass = (level) => {
+  //   switch (level) {
+  //     case "High":
+  //       return "risk-high";
+  //     case "Medium":
+  //       return "risk-medium";
+  //     case "Low":
+  //       return "risk-low";
+  //     default:
+  //       return "risk-default";
+  //   }
+  // };
 
-  const getPriorityClass = (priority) => {
-    switch (priority) {
-      case "Immediate":
-        return "priority-immediate";
-      case "Urgent":
-        return "priority-urgent";
-      case "Routine":
-        return "priority-routine";
-      default:
-        return "";
-    }
-  };
+  // const getPriorityClass = (priority) => {
+  //   switch (priority) {
+  //     case "Immediate":
+  //       return "priority-immediate";
+  //     case "Urgent":
+  //       return "priority-urgent";
+  //     case "Routine":
+  //       return "priority-routine";
+  //     default:
+  //       return "";
+  //   }
+  // };
 
   return (
-    <div className="clinical-container">
-      <div className="clinical-card">
-
-        {/* HEADER */}
-        <div className="clinical-header">
+    <div className='min-h-screen bg-slate-100 py-10 px-6'>
+      <div className='max-w-7xl mx-auto space-y-8'>
+        {/* TOP HEADER BAR */}
+        <div className='bg-white border rounded-xl p-6 shadow-sm flex justify-between items-center'>
           <div>
-            <h1>Clinical Triage Summary</h1>
-            <p className={`priority-text ${getPriorityClass(triagePriority)}`}>
-              {triagePriority} Priority
+            <h1 className='text-2xl font-bold text-slate-900'>
+              Clinical Triage Report
+            </h1>
+            <p className='text-sm text-slate-500 mt-1'>
+              AI-Assisted Emergency Risk Stratification
             </p>
           </div>
 
-          <div className={`risk-indicator ${getRiskClass(riskLevel)}`}>
-            {riskLevel} Risk
+          <div className='flex gap-4 items-center'>
+            {/* Priority Badge */}
+            <div
+              className={`
+            px-4 py-2 rounded-lg text-sm font-semibold
+            ${triagePriority === "Immediate" && "bg-red-100 text-red-700 border border-red-300"}
+            ${triagePriority === "Urgent" && "bg-amber-100 text-amber-700 border border-amber-300"}
+            ${triagePriority === "Routine" && "bg-green-100 text-green-700 border border-green-300"}
+          `}
+            >
+              {triagePriority} Priority
+            </div>
+
+            {/* Risk Badge */}
+            <div
+              className={`
+            px-4 py-2 rounded-lg text-sm font-semibold
+            ${riskLevel === "High" && "bg-red-600 text-white"}
+            ${riskLevel === "Medium" && "bg-amber-500 text-white"}
+            ${riskLevel === "Low" && "bg-green-600 text-white"}
+          `}
+            >
+              {riskLevel} Risk
+            </div>
           </div>
         </div>
 
-        {/* SEVERITY PROGRESS */}
-        <div className="section">
-          <h3>Severity Score</h3>
-          <div className="progress-bar">
+        {/* SEVERITY SECTION */}
+        <div className='bg-white border rounded-xl p-6 shadow-sm'>
+          <h2 className='text-sm font-semibold text-slate-600 uppercase tracking-wide mb-4'>
+            Severity Score
+          </h2>
+
+          <div className='w-full bg-slate-200 rounded-full h-4 overflow-hidden'>
             <div
-              className={`progress-fill ${getRiskClass(riskLevel)}`}
+              className={`
+              h-full transition-all duration-500
+              ${riskLevel === "High" && "bg-red-600"}
+              ${riskLevel === "Medium" && "bg-amber-500"}
+              ${riskLevel === "Low" && "bg-green-600"}
+            `}
               style={{ width: `${severityScore}%` }}
             />
           </div>
-          <div className="progress-text">{severityScore}/100</div>
+
+          <div className='mt-3 text-lg font-semibold text-slate-800'>
+            {severityScore}/100
+          </div>
         </div>
 
-        {/* CORE METRICS */}
-        <div className="metrics-grid">
-
-          <div className="metric-box">
-            <label>Vital Stability</label>
+        {/* METRICS GRID */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+          {/* Vital Stability */}
+          <div className='bg-white border rounded-xl p-6 shadow-sm'>
+            <p className='text-xs text-slate-500 uppercase mb-2'>
+              Vital Stability
+            </p>
             <div
-              className={`vital-status ${
-                vitalStatus === "Unstable"
-                  ? "vital-unstable"
-                  : "vital-stable"
+              className={`text-xl font-bold ${
+                vitalStatus === "Unstable" ? "text-red-600" : "text-green-600"
               }`}
             >
               {vitalStatus}
             </div>
           </div>
 
-          <div className="metric-box">
-            <label>AI Confidence</label>
-            <div className="metric-value">
-              {confidencePercent}
-              <span>%</span>
+          {/* AI Confidence */}
+          <div className='bg-white border rounded-xl p-6 shadow-sm'>
+            <p className='text-xs text-slate-500 uppercase mb-2'>
+              AI Confidence
+            </p>
+            <div className='text-xl font-bold text-slate-800'>
+              {confidencePercent}%
             </div>
           </div>
 
-        </div>
-
-        {/* DEPARTMENTS */}
-        <div className="section">
-          <h3>Assigned Departments</h3>
-          <div className="department-list">
-            <div className="department-item">
-              <strong>Primary:</strong> {departmentPrimary}
+          {/* Primary Department */}
+          <div className='bg-white border rounded-xl p-6 shadow-sm'>
+            <p className='text-xs text-slate-500 uppercase mb-2'>
+              Assigned Department
+            </p>
+            <div className='text-lg font-semibold text-slate-800'>
+              {departmentPrimary}
             </div>
-
             {departmentSecondary && (
-              <div className="department-item secondary">
-                <strong>Secondary:</strong> {departmentSecondary}
+              <div className='text-sm text-slate-500 mt-1'>
+                Secondary: {departmentSecondary}
               </div>
             )}
           </div>
         </div>
 
-        {/* FACTORS */}
-        <div className="section">
-          <h3>Contributing Clinical Factors</h3>
-          <ul className="clinical-list">
-            {contributingFactors.length > 0 ? (
-              contributingFactors.map((factor, index) => (
-                <li key={index}>{factor}</li>
-              ))
-            ) : (
-              <li>No contributing factors identified.</li>
-            )}
-          </ul>
+        {/* CLINICAL FACTORS */}
+        <div className='bg-white border rounded-xl p-6 shadow-sm'>
+          <h2 className='text-sm font-semibold text-slate-600 uppercase tracking-wide mb-4'>
+            Contributing Clinical Factors
+          </h2>
+
+          {contributingFactors.length > 0 ? (
+            <ul className='space-y-2 text-slate-700 text-sm'>
+              {contributingFactors.map((factor, index) => (
+                <li key={index} className='flex items-start gap-2'>
+                  <span className='mt-1 w-2 h-2 bg-slate-400 rounded-full'></span>
+                  {factor}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className='text-slate-500 text-sm'>
+              No contributing factors identified.
+            </p>
+          )}
         </div>
 
         {/* RECOMMENDATIONS */}
-        <div className="section">
-          <h3>Recommended Clinical Actions</h3>
-          <ul className="clinical-list">
-            {recommendations.length > 0 ? (
-              recommendations.map((rec, index) => (
-                <li key={index}>{rec}</li>
-              ))
-            ) : (
-              <li>No immediate recommendations provided.</li>
-            )}
-          </ul>
+        <div className='bg-white border rounded-xl p-6 shadow-sm'>
+          <h2 className='text-sm font-semibold text-slate-600 uppercase tracking-wide mb-4'>
+            Recommended Clinical Actions
+          </h2>
+
+          {recommendations.length > 0 ? (
+            <ul className='space-y-2 text-slate-700 text-sm'>
+              {recommendations.map((rec, index) => (
+                <li key={index} className='flex items-start gap-2'>
+                  <span className='mt-1 w-2 h-2 bg-blue-500 rounded-full'></span>
+                  {rec}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className='text-slate-500 text-sm'>
+              No immediate recommendations provided.
+            </p>
+          )}
         </div>
 
         {/* DISCLAIMER */}
-        <div className="clinical-disclaimer">
+        <div className='bg-slate-50 border rounded-xl p-4 text-xs text-slate-600'>
           This AI-assisted triage summary supports — but does not replace —
           licensed clinical judgment.
         </div>
 
+        {/* ACTION BUTTON */}
         <button
-          className="primary-btn"
           onClick={() => navigate("/")}
+          className='w-full bg-slate-900 hover:bg-black text-white font-semibold py-4 rounded-xl transition'
         >
-          New Patient Assessment
+          Start New Assessment
         </button>
       </div>
     </div>

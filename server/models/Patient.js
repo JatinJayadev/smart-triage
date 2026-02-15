@@ -10,13 +10,12 @@ const patientSchema = new mongoose.Schema(
     diastolicBP: Number,
     heartRate: Number,
     temperature: Number,
-    spo2: { type: Number, min: 0, max: 100 },
+    spo2: Number,
     respRate: Number,
 
     symptoms: { type: [String], default: [] },
     preExistingConditions: { type: [String], default: [] },
 
-    // Store raw EHR for traceability
     ehrText: { type: String },
 
     riskLevel: {

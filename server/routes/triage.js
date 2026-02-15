@@ -24,11 +24,7 @@ router.post("/", async (req, res) => {
       ehrText = "",
     } = req.body;
 
-    const hasManualData =
-      age ||
-      systolicBP ||
-      heartRate ||
-      symptoms.length > 0;
+    const hasManualData = age || systolicBP || heartRate || symptoms.length > 0;
 
     const hasEHR = ehrText && ehrText.trim().length > 20;
 
@@ -156,7 +152,10 @@ Respond ONLY in valid JSON.
 
     const parsed = JSON.parse(completion.choices[0].message.content);
 
-    parsed.severityScore = Math.min(Math.max(parsed.severityScore || 0, 0), 100);
+    parsed.severityScore = Math.min(
+      Math.max(parsed.severityScore || 0, 0),
+      100,
+    );
     parsed.confidence = Math.min(Math.max(parsed.confidence || 0, 0), 1);
 
     const newPatient = new Patient({
@@ -186,5 +185,61 @@ Respond ONLY in valid JSON.
     res.status(500).json({ message: "Server Error" });
   }
 });
+
+router.get("/", async (req, res) => {
+  try {
+    const patients = await Patient.find().sort({ createdAt: -1 });
+
+    const totalPatients = patients.length;
+
+    const highRisk = patients.filter(p => p.riskLevel === "High").length;
+    const mediumRisk = patients.filter(p => p.riskLevel === "Medium").length;
+    const lowRisk = patients.filter(p => p.riskLevel === "Low").length;
+
+    const unstableCount = patients.filter(p => p.vitalStatus === "Unstable").length;
+
+    const avgSeverity =
+      totalPatients > 0
+        ? (
+            patients.reduce((sum, p) => sum + (p.severityScore || 0), 0) /
+            totalPatients
+          ).toFixed(1)
+        : 0;
+
+    const avgConfidence =
+      totalPatients > 0
+        ? (
+            patients.reduce((sum, p) => sum + (p.confidence || 0), 0) /
+            totalPatients
+          ).toFixed(2)
+        : 0;
+
+    // Department distribution
+    const departmentStats = {};
+    patients.forEach((p) => {
+      if (!departmentStats[p.departmentPrimary]) {
+        departmentStats[p.departmentPrimary] = 0;
+      }
+      departmentStats[p.departmentPrimary]++;
+    });
+
+    res.json({
+      totalPatients,
+      highRisk,
+      mediumRisk,
+      lowRisk,
+      unstableCount,
+      avgSeverity,
+      avgConfidence,
+      departmentStats,
+      patients,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
 
 module.exports = router;
